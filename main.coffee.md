@@ -23,7 +23,8 @@ Bind postMessage events to methods.
             send
               error:
                 id: id
-                result: error
+                message: error.message
+                stack: error.stack
 
       addEventListener "unload", ->
         send
