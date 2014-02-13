@@ -54,7 +54,8 @@ receive method calls from the parent window through the postMessage events.</p>
         send
           error:
             id: id
-            result: error
+            message: error.message
+            stack: error.stack
 
   addEventListener <span class="string">"unload"</span>, -&gt;
     send
