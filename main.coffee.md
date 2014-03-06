@@ -9,7 +9,7 @@ Bind postMessage events to methods.
     module.exports = (I={}, self={}) ->
       # Only listening to messages from `opener`
       addEventListener "message", (event) ->
-        if event.source is opener
+        if event.source is opener or event.source is parent
           {method, params, id} = event.data
 
           try
@@ -39,4 +39,4 @@ Bind postMessage events to methods.
       return self
 
     send = (data) ->
-      opener?.postMessage data, "*"
+      (opener or parent)?.postMessage data, "*"
