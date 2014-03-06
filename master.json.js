@@ -15,13 +15,13 @@ window["distri/postmaster:master"]({
     "main.coffee.md": {
       "path": "main.coffee.md",
       "mode": "100644",
-      "content": "Postmaster\n==========\n\nPostmaster allows a child window that was opened from a parent window to\nreceive method calls from the parent window through the postMessage events.\n\nBind postMessage events to methods.\n\n    module.exports = (I={}, self={}) ->\n      # Only listening to messages from `opener`\n      addEventListener \"message\", (event) ->\n        if event.source is opener\n          {method, params, id} = event.data\n\n          try\n            result = self[method](params...)\n\n            send\n              success:\n                id: id\n                result: result\n          catch error\n            send\n              error:\n                id: id\n                message: error.message\n                stack: error.stack\n\n      addEventListener \"unload\", ->\n        send\n          status: \"unload\"\n\n      # Tell our opener that we're ready\n      send\n        status: \"ready\"\n\n      self.sendToParent = send\n\n      return self\n\n    send = (data) ->\n      opener?.postMessage data, \"*\"\n",
+      "content": "Postmaster\n==========\n\nPostmaster allows a child window that was opened from a parent window to\nreceive method calls from the parent window through the postMessage events.\n\nBind postMessage events to methods.\n\n    module.exports = (I={}, self={}) ->\n      # Only listening to messages from `opener`\n      addEventListener \"message\", (event) ->\n        if event.source is opener or event.source is parent\n          {method, params, id} = event.data\n\n          try\n            result = self[method](params...)\n\n            send\n              success:\n                id: id\n                result: result\n          catch error\n            send\n              error:\n                id: id\n                message: error.message\n                stack: error.stack\n\n      addEventListener \"unload\", ->\n        send\n          status: \"unload\"\n\n      # Tell our opener that we're ready\n      send\n        status: \"ready\"\n\n      self.sendToParent = send\n\n      return self\n\n    send = (data) ->\n      (opener or parent)?.postMessage data, \"*\"\n",
       "type": "blob"
     },
     "pixie.cson": {
       "path": "pixie.cson",
       "mode": "100644",
-      "content": "version: \"0.2.0\"\n",
+      "content": "version: \"0.2.1\"\n",
       "type": "blob"
     },
     "test/postmaster.coffee": {
@@ -34,12 +34,12 @@ window["distri/postmaster:master"]({
   "distribution": {
     "main": {
       "path": "main",
-      "content": "(function() {\n  var send;\n\n  module.exports = function(I, self) {\n    if (I == null) {\n      I = {};\n    }\n    if (self == null) {\n      self = {};\n    }\n    addEventListener(\"message\", function(event) {\n      var error, id, method, params, result, _ref;\n      if (event.source === opener) {\n        _ref = event.data, method = _ref.method, params = _ref.params, id = _ref.id;\n        try {\n          result = self[method].apply(self, params);\n          return send({\n            success: {\n              id: id,\n              result: result\n            }\n          });\n        } catch (_error) {\n          error = _error;\n          return send({\n            error: {\n              id: id,\n              message: error.message,\n              stack: error.stack\n            }\n          });\n        }\n      }\n    });\n    addEventListener(\"unload\", function() {\n      return send({\n        status: \"unload\"\n      });\n    });\n    send({\n      status: \"ready\"\n    });\n    self.sendToParent = send;\n    return self;\n  };\n\n  send = function(data) {\n    return typeof opener !== \"undefined\" && opener !== null ? opener.postMessage(data, \"*\") : void 0;\n  };\n\n}).call(this);\n\n//# sourceURL=main.coffee",
+      "content": "(function() {\n  var send;\n\n  module.exports = function(I, self) {\n    if (I == null) {\n      I = {};\n    }\n    if (self == null) {\n      self = {};\n    }\n    addEventListener(\"message\", function(event) {\n      var error, id, method, params, result, _ref;\n      if (event.source === opener || event.source === parent) {\n        _ref = event.data, method = _ref.method, params = _ref.params, id = _ref.id;\n        try {\n          result = self[method].apply(self, params);\n          return send({\n            success: {\n              id: id,\n              result: result\n            }\n          });\n        } catch (_error) {\n          error = _error;\n          return send({\n            error: {\n              id: id,\n              message: error.message,\n              stack: error.stack\n            }\n          });\n        }\n      }\n    });\n    addEventListener(\"unload\", function() {\n      return send({\n        status: \"unload\"\n      });\n    });\n    send({\n      status: \"ready\"\n    });\n    self.sendToParent = send;\n    return self;\n  };\n\n  send = function(data) {\n    var _ref;\n    return (_ref = opener || parent) != null ? _ref.postMessage(data, \"*\") : void 0;\n  };\n\n}).call(this);\n\n//# sourceURL=main.coffee",
       "type": "blob"
     },
     "pixie": {
       "path": "pixie",
-      "content": "module.exports = {\"version\":\"0.2.0\"};",
+      "content": "module.exports = {\"version\":\"0.2.1\"};",
       "type": "blob"
     },
     "test/postmaster": {
@@ -51,7 +51,7 @@ window["distri/postmaster:master"]({
   "progenitor": {
     "url": "http://strd6.github.io/editor/"
   },
-  "version": "0.2.0",
+  "version": "0.2.1",
   "entryPoint": "main",
   "repository": {
     "id": 15326478,
@@ -117,14 +117,14 @@ window["distri/postmaster:master"]({
     "labels_url": "https://api.github.com/repos/distri/postmaster/labels{/name}",
     "releases_url": "https://api.github.com/repos/distri/postmaster/releases{/id}",
     "created_at": "2013-12-20T00:42:15Z",
-    "updated_at": "2013-12-20T01:05:32Z",
-    "pushed_at": "2013-12-20T01:05:32Z",
+    "updated_at": "2014-02-13T20:12:20Z",
+    "pushed_at": "2014-02-13T20:12:20Z",
     "git_url": "git://github.com/distri/postmaster.git",
     "ssh_url": "git@github.com:distri/postmaster.git",
     "clone_url": "https://github.com/distri/postmaster.git",
     "svn_url": "https://github.com/distri/postmaster",
     "homepage": null,
-    "size": 124,
+    "size": 152,
     "stargazers_count": 0,
     "watchers_count": 0,
     "language": "CoffeeScript",
@@ -166,7 +166,7 @@ window["distri/postmaster:master"]({
     "network_count": 0,
     "subscribers_count": 2,
     "branch": "master",
-    "defaultBranch": "master"
+    "publishBranch": "gh-pages"
   },
   "dependencies": {}
 });
