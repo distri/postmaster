@@ -21,7 +21,7 @@ window["distri/postmaster:v0.2.2-pre"]({
     "pixie.cson": {
       "path": "pixie.cson",
       "mode": "100644",
-      "content": "version: \"0.2.2-pre\"\n",
+      "content": "version: \"0.2.2\"\n",
       "type": "blob"
     },
     "test/postmaster.coffee": {
@@ -39,7 +39,7 @@ window["distri/postmaster:v0.2.2-pre"]({
     },
     "pixie": {
       "path": "pixie",
-      "content": "module.exports = {\"version\":\"0.2.2-pre\"};",
+      "content": "module.exports = {\"version\":\"0.2.2\"};",
       "type": "blob"
     },
     "test/postmaster": {
@@ -51,7 +51,7 @@ window["distri/postmaster:v0.2.2-pre"]({
   "progenitor": {
     "url": "http://strd6.github.io/editor/"
   },
-  "version": "0.2.2-pre",
+  "version": "0.2.2",
   "entryPoint": "main",
   "repository": {
     "id": 15326478,
