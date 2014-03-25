@@ -4,12 +4,16 @@ Postmaster
 Postmaster allows a child window that was opened from a parent window to
 receive method calls from the parent window through the postMessage events.
 
+Figure out who we should be listening to.
+
+    dominant = opener or ((parent != window) and parent) or undefined
+
 Bind postMessage events to methods.
 
     module.exports = (I={}, self={}) ->
       # Only listening to messages from `opener`
       addEventListener "message", (event) ->
-        if event.source is opener or event.source is parent
+        if event.source is dominant
           {method, params, id} = event.data
 
           try
@@ -39,4 +43,4 @@ Bind postMessage events to methods.
       return self
 
     send = (data) ->
-      (opener or parent)?.postMessage data, "*"
+      dominant?.postMessage data, "*"
