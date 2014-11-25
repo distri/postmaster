@@ -60,13 +60,14 @@ receive method calls from the parent window through the postMessage events.</p>
         result = self[method](params...)
 
         send
-          success:
-            id: id
-            result: result
+          type: <span class="string">"response"</span>
+          id: id
+          success: result 
       <span class="keyword">catch</span> error
         send
+          type: <span class="string">"response"</span>
+          id: id
           error:
-            id: id
             message: error.message
             stack: error.stack
 
@@ -211,23 +212,19 @@ receive method calls from the parent window through the postMessage events.</p>
     }, 0);
   };
 
-  Interactive.register("setup", function(params) {
-    params.code = CoffeeScript.compile(params.source);
-    return exec(params);
-  });
-
-  Interactive.register("setup-js", function(params) {
-    params.code = params.source;
-    return exec(params);
-  });
-
   $(function() {
-    return findInteractiveElements();
+    Interactive.register("setup", function(params) {
+      params.code = CoffeeScript.compile(params.source);
+      return exec(params);
+    });
+    return Interactive.register("setup-js", function(params) {
+      params.code = params.source;
+      return exec(params);
+    });
   });
 
 }).call(this);
 
-//# sourceURL=interactive.coffee
 </script><script src="package.js"></script>
 </body>
 </html>
