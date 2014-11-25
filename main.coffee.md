@@ -20,13 +20,14 @@ Bind postMessage events to methods.
             result = self[method](params...)
 
             send
-              success:
-                id: id
-                result: result
+              type: "response"
+              id: id
+              success: result 
           catch error
             send
+              type: "response"
+              id: id
               error:
-                id: id
                 message: error.message
                 stack: error.stack
 
