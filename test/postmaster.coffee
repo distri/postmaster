@@ -28,7 +28,7 @@ describe "Postmaster", ->
     .then ->
       childWindow.close()
       done()
-    .catch (error) ->
+    , (error) ->
       childWindow.close()
       done(error)
 
@@ -47,6 +47,6 @@ describe "Postmaster", ->
     .then ->
       iframe.remove()
       done()
-    .catch (error) ->
+    , (error) ->
       iframe.remove()
       done(error)
