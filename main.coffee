@@ -9,7 +9,7 @@ defaultReceiver = self
 module.exports = Postmaster = (I={}, self={}) ->
   send = (data) ->
     target = self.remoteTarget()
-    if target instanceof Worker
+    if !Worker? or target instanceof Worker
       target.postMessage data
     else
       target.postMessage data, "*"
@@ -18,9 +18,9 @@ module.exports = Postmaster = (I={}, self={}) ->
   self.remoteTarget ?= -> dominant
   self.receiver ?= -> defaultReceiver
 
-  # Only listening to messages from `opener`
   self.receiver().addEventListener "message", (event) ->
-    if event.source is self.remoteTarget()
+    # Only listening to messages from `opener`
+    if event.source is self.remoteTarget() or !event.source
       data = event.data
       {type, method, params, id} = data
 
@@ -86,6 +86,9 @@ module.exports = Postmaster = (I={}, self={}) ->
   return self
 
 Postmaster.dominant = ->
-  opener or ((parent != window) and parent) or undefined
+  if window? # iframe or child window context
+    opener or ((parent != window) and parent) or undefined
+  else # Web Worker Context
+    self
 
 return Postmaster

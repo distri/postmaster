@@ -76,8 +76,6 @@ describe "Postmaster", ->
   it "should work with web workers", (done) ->
     blob = new Blob [scriptContent()]
     jsUrl = URL.createObjectURL(blob)
-    
-    console.log jsUrl
 
     worker = new Worker(jsUrl)
 
