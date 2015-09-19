@@ -26,11 +26,11 @@ describe "Postmaster", ->
     .then (result) ->
       assert.equal result, 5
     .then ->
-      childWindow.close()
       done()
     , (error) ->
-      childWindow.close()
       done(error)
+    .then ->
+      childWindow.close()
 
   it "should work with iframes", (done) ->
     iframe = document.createElement('iframe')
@@ -45,8 +45,8 @@ describe "Postmaster", ->
     .then (result) ->
       assert.equal result, 17
     .then ->
-      iframe.remove()
       done()
     , (error) ->
-      iframe.remove()
       done(error)
+    .then ->
+      iframe.remove()
