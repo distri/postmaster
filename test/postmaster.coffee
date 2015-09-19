@@ -50,3 +50,24 @@ describe "Postmaster", ->
       done(error)
     .then ->
       iframe.remove()
+
+  it "should be able to go around the world", (done) ->
+    iframe = document.createElement('iframe')
+    document.body.appendChild(iframe)
+
+    childWindow = iframe.contentWindow
+    initWindow(childWindow)
+
+    postmaster = Postmaster()
+    postmaster.remoteTarget = -> childWindow
+    postmaster.yolo = (txt) ->
+      "heyy #{txt}"
+    postmaster.invokeRemote "invokeRemote", "yolo", "cool"
+    .then (result) ->
+      assert.equal result, "heyy cool"
+    .then ->
+      done()
+    , (error) ->
+      done(error)
+    .then ->
+      iframe.remove()
