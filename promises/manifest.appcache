@@ -1,0 +1,12 @@
+CACHE MANIFEST
+# 1442688901777
+
+CACHE:
+index.html
+../promises.json.js
+
+
+NETWORK:
+https://*
+http://*
+*
