@@ -180,7 +180,7 @@
     },
     "pixie.cson": {
       "path": "pixie.cson",
-      "content": "version: \"0.3.0-pre.0\"\n",
+      "content": "version: \"0.3.0\"\n",
       "mode": "100644",
       "type": "blob"
     },
@@ -199,7 +199,7 @@
   "distribution": {
     "pixie": {
       "path": "pixie",
-      "content": "module.exports = {\"version\":\"0.3.0-pre.0\"};",
+      "content": "module.exports = {\"version\":\"0.3.0\"};",
       "type": "blob"
     },
     "test/postmaster": {
@@ -216,7 +216,7 @@
   "progenitor": {
     "url": "http://www.danielx.net/editor/"
   },
-  "version": "0.3.0-pre.0",
+  "version": "0.3.0",
   "entryPoint": "main",
   "repository": {
     "branch": "promises",
