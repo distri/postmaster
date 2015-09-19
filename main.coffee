@@ -4,15 +4,22 @@ Postmaster wraps the `postMessage` API with promises.
 
 ###
 
+defaultReceiver = self
+
 module.exports = Postmaster = (I={}, self={}) ->
   send = (data) ->
-    self.remoteTarget().postMessage data, "*"
+    target = self.remoteTarget()
+    if target instanceof Worker
+      target.postMessage data
+    else
+      target.postMessage data, "*"
 
   dominant = Postmaster.dominant()
   self.remoteTarget ?= -> dominant
+  self.receiver ?= -> defaultReceiver
 
   # Only listening to messages from `opener`
-  addEventListener "message", (event) ->
+  self.receiver().addEventListener "message", (event) ->
     if event.source is self.remoteTarget()
       data = event.data
       {type, method, params, id} = data
@@ -44,7 +51,7 @@ module.exports = Postmaster = (I={}, self={}) ->
                 message: message
                 stack: error.stack
 
-  addEventListener "unload", ->
+  self.receiver().addEventListener "unload", ->
     send
       status: "unload"
 

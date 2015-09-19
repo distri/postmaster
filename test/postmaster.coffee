@@ -1,18 +1,19 @@
 Postmaster = require "../main"
 
-initWindow = (targetWindow) ->
+scriptContent = ->
   fn = ->
     pm = Postmaster()
     pm.echo = (value) ->
       return value
 
-  targetWindow.document.write """
-    <script>
-      var module = {};
-      Postmaster = #{PACKAGE.distribution.main.content};
-      (#{fn.toString()})();
-    <\/script>
   """
+    var module = {};
+    Postmaster = #{PACKAGE.distribution.main.content};
+    (#{fn.toString()})();
+  """
+
+initWindow = (targetWindow) ->
+  targetWindow.document.write "<script>#{scriptContent()}<\/script>"
 
 describe "Postmaster", ->
   it "should work with openened windows", (done) ->
@@ -71,3 +72,26 @@ describe "Postmaster", ->
       done(error)
     .then ->
       iframe.remove()
+
+  it "should work with web workers", (done) ->
+    blob = new Blob [scriptContent()]
+    jsUrl = URL.createObjectURL(blob)
+    
+    console.log jsUrl
+
+    worker = new Worker(jsUrl)
+
+    base =
+      remoteTarget: -> worker
+      receiver: -> worker
+
+    postmaster = Postmaster({}, base)
+    postmaster.invokeRemote "echo", 17
+    .then (result) ->
+      assert.equal result, 17
+    .then ->
+      done()
+    , (error) ->
+      done(error)
+    .then ->
+      worker.terminate()
