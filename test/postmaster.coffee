@@ -70,7 +70,7 @@ describe "Postmaster", ->
       done()
     .then ->
       iframe.remove()
-  
+
   it "should handle the remote call returning failed promises", (done) ->
     iframe = document.createElement('iframe')
     document.body.appendChild(iframe)
