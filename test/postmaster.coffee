@@ -5,6 +5,10 @@ scriptContent = ->
     pm = Postmaster()
     pm.echo = (value) ->
       return value
+    pm.throws = ->
+      throw new Error("This always throws")
+    pm.promiseFail = ->
+      Promise.reject new Error "This is a failed promise"
 
   """
     var module = {};
@@ -49,6 +53,36 @@ describe "Postmaster", ->
       done()
     , (error) ->
       done(error)
+    .then ->
+      iframe.remove()
+
+  it "should handle the remote call throwing errors", (done) ->
+    iframe = document.createElement('iframe')
+    document.body.appendChild(iframe)
+
+    childWindow = iframe.contentWindow
+    initWindow(childWindow)
+
+    postmaster = Postmaster()
+    postmaster.remoteTarget = -> childWindow
+    postmaster.invokeRemote "throws"
+    .catch (error) ->
+      done()
+    .then ->
+      iframe.remove()
+  
+  it "should handle the remote call returning failed promises", (done) ->
+    iframe = document.createElement('iframe')
+    document.body.appendChild(iframe)
+
+    childWindow = iframe.contentWindow
+    initWindow(childWindow)
+
+    postmaster = Postmaster()
+    postmaster.remoteTarget = -> childWindow
+    postmaster.invokeRemote "promiseFail"
+    .catch (error) ->
+      done()
     .then ->
       iframe.remove()
 
