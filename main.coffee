@@ -51,14 +51,6 @@ module.exports = Postmaster = (I={}, self={}) ->
                 message: message
                 stack: error.stack
 
-  self.receiver().addEventListener "unload", ->
-    send
-      status: "unload"
-
-  # Tell our opener that we're ready
-  send
-    status: "ready"
-
   pendingResponses = {}
   remoteId = 0
 
