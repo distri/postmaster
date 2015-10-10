@@ -85,6 +85,7 @@ module.exports = Postmaster = (I={}, self={}) ->
       , ackWait
 
       pendingResponses[id] =
+        timeout: timeout
         resolve: (result) ->
           clear()
           resolve(result)
