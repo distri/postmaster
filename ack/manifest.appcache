@@ -1,0 +1,12 @@
+CACHE MANIFEST
+# 1444502076030
+
+CACHE:
+index.html
+../ack.json.js
+
+
+NETWORK:
+https://*
+http://*
+*
