@@ -127,3 +127,19 @@ describe "Postmaster", ->
       done(error)
     .then ->
       worker.terminate()
+
+  it "should fail quickly when contacting a window that doesn't support Postmaster", (done) ->
+    iframe = document.createElement('iframe')
+    document.body.appendChild(iframe)
+
+    childWindow = iframe.contentWindow
+    postmaster = Postmaster()
+    postmaster.remoteTarget = -> childWindow
+    postmaster.invokeRemote "echo", 5
+    .catch (e) ->
+      if e.message.match /no ack/i
+        done()
+      else
+        done(1)
+    .then ->
+      iframe.remove()

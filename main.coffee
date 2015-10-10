@@ -5,6 +5,7 @@ Postmaster wraps the `postMessage` API with promises.
 ###
 
 defaultReceiver = self
+ackTimeout = 1000
 
 module.exports = Postmaster = (I={}, self={}) ->
   send = (data) ->
@@ -17,6 +18,7 @@ module.exports = Postmaster = (I={}, self={}) ->
   dominant = Postmaster.dominant()
   self.remoteTarget ?= -> dominant
   self.receiver ?= -> defaultReceiver
+  self.ackTimeout ?= -> ackTimeout
 
   self.receiver().addEventListener "message", (event) ->
     # Only listening to messages from `opener`
@@ -25,11 +27,17 @@ module.exports = Postmaster = (I={}, self={}) ->
       {type, method, params, id} = data
 
       switch type
+        when "ack"
+          pendingResponses[id]?.ack = true
         when "response"
           pendingResponses[id].resolve data.result
         when "error"
           pendingResponses[id].reject data.error
         when "message"
+          send
+            type: "ack"
+            id: id
+
           Promise.resolve()
           .then ->
             self[method](params...)
@@ -65,7 +73,16 @@ module.exports = Postmaster = (I={}, self={}) ->
 
     new Promise (resolve, reject) ->
       clear = ->
+        clearTimeout pendingResponses[id].timeout
         delete pendingResponses[id]
+
+      ackWait = self.ackTimeout()
+      timeout = setTimeout ->
+        pendingResponse = pendingResponses[id]
+        if pendingResponse and !pendingResponse.ack
+          clear()
+          reject new Error "No ack received within #{ackWait}"
+      , ackWait
 
       pendingResponses[id] =
         resolve: (result) ->
