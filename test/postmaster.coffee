@@ -70,6 +70,21 @@ describe "Postmaster", ->
       done()
     .then ->
       iframe.remove()
+  
+  it "should throwing a useful error when the remote doesn't define the function", (done) ->
+    iframe = document.createElement('iframe')
+    document.body.appendChild(iframe)
+
+    childWindow = iframe.contentWindow
+    initWindow(childWindow)
+
+    postmaster = Postmaster()
+    postmaster.remoteTarget = -> childWindow
+    postmaster.invokeRemote "someUndefinedFunction"
+    .catch (error) ->
+      done()
+    .then ->
+      iframe.remove()
 
   it "should handle the remote call returning failed promises", (done) ->
     iframe = document.createElement('iframe')

@@ -40,7 +40,10 @@ module.exports = Postmaster = (I={}, self={}) ->
 
           Promise.resolve()
           .then ->
-            self[method](params...)
+            if typeof self[method] is "function"
+              self[method](params...)
+            else
+              throw new Error "`#{method}` is not a function"
           .then (result) ->
             send
               type: "response"
