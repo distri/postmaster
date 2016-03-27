@@ -1,0 +1,12 @@
+CACHE MANIFEST
+# 1459112433975
+
+CACHE:
+index.html
+../remove-param.json
+
+
+NETWORK:
+https://*
+http://*
+*
