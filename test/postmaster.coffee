@@ -70,7 +70,7 @@ describe "Postmaster", ->
       done()
     .then ->
       iframe.remove()
-  
+
   it "should throwing a useful error when the remote doesn't define the function", (done) ->
     iframe = document.createElement('iframe')
     document.body.appendChild(iframe)
@@ -132,7 +132,7 @@ describe "Postmaster", ->
       remoteTarget: -> worker
       receiver: -> worker
 
-    postmaster = Postmaster({}, base)
+    postmaster = Postmaster(base)
     postmaster.invokeRemote "echo", 17
     .then (result) ->
       assert.equal result, 17
