@@ -7,7 +7,7 @@ Postmaster wraps the `postMessage` API with promises.
 defaultReceiver = self
 ackTimeout = 1000
 
-module.exports = Postmaster = (I={}, self={}) ->
+module.exports = Postmaster = (self={}) ->
   send = (data) ->
     target = self.remoteTarget()
     if !Worker? or target instanceof Worker
