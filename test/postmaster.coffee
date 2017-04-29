@@ -71,6 +71,8 @@ describe "Postmaster", ->
     .then ->
       iframe.remove()
 
+    return
+
   it "should throwing a useful error when the remote doesn't define the function", (done) ->
     iframe = document.createElement('iframe')
     document.body.appendChild(iframe)
@@ -86,6 +88,8 @@ describe "Postmaster", ->
     .then ->
       iframe.remove()
 
+    return
+
   it "should handle the remote call returning failed promises", (done) ->
     iframe = document.createElement('iframe')
     document.body.appendChild(iframe)
@@ -100,6 +104,8 @@ describe "Postmaster", ->
       done()
     .then ->
       iframe.remove()
+
+    return
 
   it "should be able to go around the world", (done) ->
     iframe = document.createElement('iframe')
@@ -122,6 +128,8 @@ describe "Postmaster", ->
     .then ->
       iframe.remove()
 
+    return
+
   it "should work with web workers", (done) ->
     blob = new Blob [scriptContent()]
     jsUrl = URL.createObjectURL(blob)
@@ -143,6 +151,8 @@ describe "Postmaster", ->
     .then ->
       worker.terminate()
 
+    return
+
   it "should fail quickly when contacting a window that doesn't support Postmaster", (done) ->
     iframe = document.createElement('iframe')
     document.body.appendChild(iframe)
@@ -158,3 +168,16 @@ describe "Postmaster", ->
         done(1)
     .then ->
       iframe.remove()
+
+    return
+
+  it "should return a rejected promise when unable to send to the target", (done) ->
+    postmaster = Postmaster
+      remoteTarget: -> null
+
+    postmaster.invokeRemote "yo"
+    .catch (e) ->
+      assert.equal e.message, "Cannot read property 'postMessage' of null"
+      done()
+
+    return

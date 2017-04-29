@@ -65,35 +65,39 @@ module.exports = Postmaster = (self={}) ->
   pendingResponses = {}
   remoteId = 0
 
+  clear = (id) ->
+    clearTimeout pendingResponses[id].timeout
+    delete pendingResponses[id]
+
   self.invokeRemote = (method, params...) ->
-    id = remoteId++
-
-    send
-      type: "message"
-      method: method
-      params: params
-      id: id
-
     new Promise (resolve, reject) ->
-      clear = ->
-        clearTimeout pendingResponses[id].timeout
-        delete pendingResponses[id]
+      id = remoteId++
+
+      try
+        send
+          type: "message"
+          method: method
+          params: params
+          id: id
+      catch e
+        reject(e)
+        return
 
       ackWait = self.ackTimeout()
       timeout = setTimeout ->
         pendingResponse = pendingResponses[id]
         if pendingResponse and !pendingResponse.ack
-          clear()
+          clear(id)
           reject new Error "No ack received within #{ackWait}"
       , ackWait
 
       pendingResponses[id] =
         timeout: timeout
         resolve: (result) ->
-          clear()
+          clear(id)
           resolve(result)
         reject: (error) ->
-          clear()
+          clear(id)
           reject(error)
 
   return self
