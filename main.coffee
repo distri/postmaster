@@ -10,10 +10,15 @@ ackTimeout = 1000
 module.exports = Postmaster = (self={}) ->
   send = (data) ->
     target = self.remoteTarget()
-    if !Worker? or target instanceof Worker
+
+    if !target
+      throw new Error "No remote target"
+    else if !Worker? or target instanceof Worker
       target.postMessage data
     else
       target.postMessage data, "*"
+
+    return
 
   dominant = Postmaster.dominant()
   self.remoteTarget ?= -> dominant
@@ -34,11 +39,11 @@ module.exports = Postmaster = (self={}) ->
         when "error"
           pendingResponses[id].reject data.error
         when "message"
-          send
-            type: "ack"
-            id: id
-
           Promise.resolve()
+          .then ->
+            send
+              type: "ack"
+              id: id
           .then ->
             if typeof self[method] is "function"
               self[method](params...)
