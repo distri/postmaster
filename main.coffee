@@ -24,6 +24,7 @@ module.exports = Postmaster = (self={}) ->
   self.remoteTarget ?= -> dominant
   self.receiver ?= -> defaultReceiver
   self.ackTimeout ?= -> ackTimeout
+  self.delegate ?= self
 
   self.receiver().addEventListener "message", (event) ->
     # Only listening to messages from `opener`
@@ -45,8 +46,8 @@ module.exports = Postmaster = (self={}) ->
               type: "ack"
               id: id
           .then ->
-            if typeof self[method] is "function"
-              self[method](params...)
+            if typeof self.delegate[method] is "function"
+              self.delegate[method](params...)
             else
               throw new Error "`#{method}` is not a function"
           .then (result) ->
