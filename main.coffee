@@ -26,7 +26,7 @@ module.exports = Postmaster = (self={}) ->
   self.ackTimeout ?= -> ackTimeout
   self.delegate ?= self
 
-  self.receiver().addEventListener "message", (event) ->
+  listener = (event) ->
     # Only listening to messages from `opener`
     if event.source is self.remoteTarget() or !event.source
       data = event.data
@@ -67,6 +67,11 @@ module.exports = Postmaster = (self={}) ->
               error:
                 message: message
                 stack: error.stack
+
+  self.receiver().addEventListener "message", listener
+  
+  self.dispose = ->
+    self.receiver().removeEventListener "message", listener
 
   pendingResponses = {}
   remoteId = 0

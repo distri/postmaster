@@ -177,7 +177,8 @@ describe "Postmaster", ->
 
     postmaster.invokeRemote "yo"
     .catch (e) ->
-      assert.equal e.message, "Cannot read property 'postMessage' of null"
+      assert.equal e.message, "No remote target"
       done()
+    .catch done
 
     return
