@@ -10,6 +10,8 @@ ackTimeout = 1000
 module.exports = Postmaster = (self={}) ->
   send = (data) ->
     target = self.remoteTarget()
+    if self.token
+      data.token = self.token
 
     if !target
       throw new Error "No remote target"
@@ -25,11 +27,15 @@ module.exports = Postmaster = (self={}) ->
   self.receiver ?= -> defaultReceiver
   self.ackTimeout ?= -> ackTimeout
   self.delegate ?= self
+  self.token ?= Math.random()
 
   listener = (event) ->
+    data = event.data
+
     # Only listening to messages from `opener`
-    if event.source is self.remoteTarget() or !event.source
-      data = event.data
+    # event.source becomes undefined during the `onunload` event
+    # We can track a token and match to allow the final message in this case
+    if event.source is self.remoteTarget() or (event.source is undefined and data.token is self.token)
       {type, method, params, id} = data
 
       switch type
@@ -45,7 +51,7 @@ module.exports = Postmaster = (self={}) ->
             send
               type: "ack"
               id: id
-          .then ->
+
             if typeof self.delegate[method] is "function"
               self.delegate[method](params...)
             else
@@ -69,7 +75,7 @@ module.exports = Postmaster = (self={}) ->
                 stack: error.stack
 
   self.receiver().addEventListener "message", listener
-  
+
   self.dispose = ->
     self.receiver().removeEventListener "message", listener
 
