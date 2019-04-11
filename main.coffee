@@ -30,12 +30,13 @@ module.exports = Postmaster = (self={}) ->
   self.token ?= Math.random()
 
   listener = (event) ->
-    data = event.data
+    {data, source} = event
+    target = self.remoteTarget()
 
     # Only listening to messages from `opener`
     # event.source becomes undefined during the `onunload` event
     # We can track a token and match to allow the final message in this case
-    if event.source is self.remoteTarget() or (event.source is undefined and data.token is self.token)
+    if source is target or (source is undefined and data.token is self.token)
       {type, method, params, id} = data
 
       switch type
@@ -48,31 +49,34 @@ module.exports = Postmaster = (self={}) ->
         when "message"
           Promise.resolve()
           .then ->
-            send
-              type: "ack"
-              id: id
+            if source
+              send
+                type: "ack"
+                id: id
 
             if typeof self.delegate[method] is "function"
               self.delegate[method](params...)
             else
               throw new Error "`#{method}` is not a function"
           .then (result) ->
-            send
-              type: "response"
-              id: id
-              result: result
+            if source
+              send
+                type: "response"
+                id: id
+                result: result
           .catch (error) ->
             if typeof error is "string"
               message = error
             else
               message = error.message
 
-            send
-              type: "error"
-              id: id
-              error:
-                message: message
-                stack: error.stack
+            if source
+              send
+                type: "error"
+                id: id
+                error:
+                  message: message
+                  stack: error.stack
 
   self.receiver().addEventListener "message", listener
 
