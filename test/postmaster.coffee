@@ -2,59 +2,82 @@ Postmaster = require "../main"
 
 scriptContent = ->
   fn = ->
-    pm = Postmaster()
-    pm.echo = (value) ->
-      return value
-    pm.throws = ->
-      throw new Error("This always throws")
-    pm.promiseFail = ->
-      Promise.reject new Error "This is a failed promise"
+    pm = Postmaster
+      delegate:
+        echo: (value) ->
+          return value
+        throws: ->
+          throw new Error("This always throws")
+        promiseFail: ->
+          Promise.reject new Error "This is a failed promise"
+        invokeRemote: ->
+          pm.invokeRemote(arguments...)
 
   """
+    (function() {
     var module = {};
-    Postmaster = #{PACKAGE.distribution.main.content};
+    (function() {
+    #{PACKAGE.distribution.main.content};
+    })();
+    var Postmaster = module.exports;
     (#{fn.toString()})();
+    })();
   """
+
+srcUrl = -> 
+  URL.createObjectURL new Blob ["""
+    <html>
+    <body>
+      <script>#{scriptContent()}<\/script>
+    </body>
+    </html>
+  """], 
+    type: "text/html; charset=utf-8"
 
 initWindow = (targetWindow) ->
   targetWindow.document.write "<script>#{scriptContent()}<\/script>"
 
 describe "Postmaster", ->
   it "should work with openened windows", (done) ->
-    childWindow = open("", null, "width=200,height=200")
+    childWindow = open(srcUrl(), null, "width=200,height=200")
 
-    initWindow(childWindow)
+    postmaster = Postmaster
+      remoteTarget: -> childWindow
 
-    postmaster = Postmaster()
-    postmaster.remoteTarget = -> childWindow
-    postmaster.invokeRemote "echo", 5
-    .then (result) ->
-      assert.equal result, 5
-    .then ->
-      done()
-    , (error) ->
-      done(error)
-    .then ->
-      childWindow.close()
+    childWindow.addEventListener "load", ->
+      postmaster.invokeRemote "echo", 5
+      .then (result) ->
+        assert.equal result, 5
+      .then ->
+        done()
+      , (error) ->
+        done(error)
+      .then ->
+        childWindow.close()
+
+    return
 
   it "should work with iframes", (done) ->
     iframe = document.createElement('iframe')
+    iframe.src = srcUrl()
     document.body.appendChild(iframe)
 
-    childWindow = iframe.contentWindow
-    initWindow(childWindow)
+    postmaster = Postmaster
+      remoteTarget: ->
+        iframe.contentWindow
 
-    postmaster = Postmaster()
-    postmaster.remoteTarget = -> childWindow
-    postmaster.invokeRemote "echo", 17
-    .then (result) ->
-      assert.equal result, 17
-    .then ->
-      done()
-    , (error) ->
-      done(error)
-    .then ->
-      iframe.remove()
+    iframe.onload = ->
+      postmaster.invokeRemote "echo", 17
+      .then (result) ->
+        assert.equal result, 17
+      .then ->
+        done()
+      , (error) ->
+        done(error)
+      .then ->
+        iframe.remove()
+
+    return
 
   it "should handle the remote call throwing errors", (done) ->
     iframe = document.createElement('iframe')
@@ -130,8 +153,9 @@ describe "Postmaster", ->
 
     return
 
-  it "should work with web workers", (done) ->
-    blob = new Blob [scriptContent()]
+  it "should work with web workers"
+  (done) ->
+    blob = new Blob [scriptContent()], type: "application/javascript"
     jsUrl = URL.createObjectURL(blob)
 
     worker = new Worker(jsUrl)

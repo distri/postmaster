@@ -128,5 +128,3 @@ Postmaster.dominant = ->
     opener or ((parent != window) and parent) or undefined
   else # Web Worker Context
     self
-
-return Postmaster
