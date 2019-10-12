@@ -81,75 +81,79 @@ describe "Postmaster", ->
 
   it "should handle the remote call throwing errors", (done) ->
     iframe = document.createElement('iframe')
+    iframe.src = srcUrl()
     document.body.appendChild(iframe)
 
-    childWindow = iframe.contentWindow
-    initWindow(childWindow)
+    postmaster = Postmaster
+      remoteTarget: ->
+        iframe.contentWindow
 
-    postmaster = Postmaster()
-    postmaster.remoteTarget = -> childWindow
-    postmaster.invokeRemote "throws"
-    .catch (error) ->
-      done()
-    .then ->
-      iframe.remove()
+    iframe.onload = ->
+      postmaster.invokeRemote "throws"
+      .catch (error) ->
+        done()
+      .then ->
+        iframe.remove()
 
     return
 
   it "should throwing a useful error when the remote doesn't define the function", (done) ->
     iframe = document.createElement('iframe')
+    iframe.src = srcUrl()
     document.body.appendChild(iframe)
 
-    childWindow = iframe.contentWindow
-    initWindow(childWindow)
+    postmaster = Postmaster
+      remoteTarget: ->
+        iframe.contentWindow
 
-    postmaster = Postmaster()
-    postmaster.remoteTarget = -> childWindow
-    postmaster.invokeRemote "someUndefinedFunction"
-    .catch (error) ->
-      done()
-    .then ->
-      iframe.remove()
+    iframe.onload = ->
+      postmaster.invokeRemote "someUndefinedFunction"
+      .catch (error) ->
+        done()
+      .then ->
+        iframe.remove()
 
     return
 
   it "should handle the remote call returning failed promises", (done) ->
     iframe = document.createElement('iframe')
+    iframe.src = srcUrl()
     document.body.appendChild(iframe)
 
-    childWindow = iframe.contentWindow
-    initWindow(childWindow)
+    postmaster = Postmaster
+      remoteTarget: ->
+        iframe.contentWindow
 
-    postmaster = Postmaster()
-    postmaster.remoteTarget = -> childWindow
-    postmaster.invokeRemote "promiseFail"
-    .catch (error) ->
-      done()
-    .then ->
-      iframe.remove()
+    iframe.onload = ->
+      postmaster.invokeRemote "promiseFail"
+      .catch (error) ->
+        done()
+      .then ->
+        iframe.remove()
 
     return
 
   it "should be able to go around the world", (done) ->
     iframe = document.createElement('iframe')
+    iframe.src = srcUrl()
     document.body.appendChild(iframe)
 
-    childWindow = iframe.contentWindow
-    initWindow(childWindow)
+    postmaster = Postmaster
+      remoteTarget: ->
+        iframe.contentWindow
 
-    postmaster = Postmaster()
-    postmaster.remoteTarget = -> childWindow
-    postmaster.yolo = (txt) ->
-      "heyy #{txt}"
-    postmaster.invokeRemote "invokeRemote", "yolo", "cool"
-    .then (result) ->
-      assert.equal result, "heyy cool"
-    .then ->
-      done()
-    , (error) ->
-      done(error)
-    .then ->
-      iframe.remove()
+    iframe.onload = ->
+      postmaster.yolo = (txt) ->
+        "heyy #{txt}"
+      postmaster.invokeRemote "invokeRemote", "yolo", "cool"
+      .then (result) ->
+        assert.equal result, "heyy cool"
+      .then ->
+        done()
+      , (error) ->
+        done(error)
+      .then ->
+        iframe.remove()
 
     return
 
@@ -160,20 +164,21 @@ describe "Postmaster", ->
 
     worker = new Worker(jsUrl)
 
-    base =
+    postmaster = Postmaster
       remoteTarget: -> worker
       receiver: -> worker
 
-    postmaster = Postmaster(base)
-    postmaster.invokeRemote "echo", 17
-    .then (result) ->
-      assert.equal result, 17
-    .then ->
-      done()
-    , (error) ->
-      done(error)
-    .then ->
-      worker.terminate()
+    setTimeout ->
+      postmaster.invokeRemote "echo", 17
+      .then (result) ->
+        assert.equal result, 17
+      .then ->
+        done()
+      , (error) ->
+        done(error)
+      .then ->
+        worker.terminate()
+    , 100
 
     return
 
@@ -182,8 +187,10 @@ describe "Postmaster", ->
     document.body.appendChild(iframe)
 
     childWindow = iframe.contentWindow
-    postmaster = Postmaster()
-    postmaster.remoteTarget = -> childWindow
+    postmaster = Postmaster
+      remoteTarget: -> childWindow
+      ackTimeout: -> 30
+
     postmaster.invokeRemote "echo", 5
     .catch (e) ->
       if e.message.match /no ack/i
