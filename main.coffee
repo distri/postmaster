@@ -40,12 +40,11 @@ module.exports = Postmaster = (self={}) ->
     {data, source} = event
     target = self.remoteTarget()
 
-    self.log name, "<-", data
-
     # Only listening to messages from `opener`
     # event.source becomes undefined during the `onunload` event
     # We can track a token and match to allow the final message in this case
     if source is target or (source is undefined and data.token is self.token)
+      self.log name, "<-", data
       {type, method, params, id} = data
 
       switch type
