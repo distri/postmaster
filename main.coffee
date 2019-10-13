@@ -6,7 +6,6 @@ Postmaster wraps the `postMessage` API with promises.
 
 defaultReceiver = self
 ackTimeout = 1000
-name = defaultReceiver.name
 
 module.exports = Postmaster = (self={}) ->
   send = (data) ->
@@ -14,12 +13,12 @@ module.exports = Postmaster = (self={}) ->
     if self.token
       data.token = self.token
 
-    data.from = name
+    data.from = defaultReceiver.name
 
     if !target
       throw new Error "No remote target"
 
-    self.log(name, "->", data)
+    self.log(defaultReceiver.name, "->", data)
 
     if !Worker? or target instanceof Worker
       target.postMessage data
@@ -44,7 +43,7 @@ module.exports = Postmaster = (self={}) ->
     # event.source becomes undefined during the `onunload` event
     # We can track a token and match to allow the final message in this case
     if source is target or (source is undefined and data.token is self.token)
-      self.log name, "<-", data
+      self.log defaultReceiver.name, "<-", data
       {type, method, params, id} = data
 
       switch type
@@ -86,13 +85,13 @@ module.exports = Postmaster = (self={}) ->
                   message: message
                   stack: error.stack
     else
-      self.log name, "DROP message", event, "source #{JSON.stringify(data.from)} does not match target"
+      self.log defaultReceiver.name, "DROP message", event, "source #{JSON.stringify(data.from)} does not match target"
 
   self.receiver().addEventListener "message", listener
 
   self.dispose = ->
     self.receiver().removeEventListener "message", listener
-    self.log "DISPOSE", name
+    self.log "DISPOSE", defaultReceiver.name
 
   pendingResponses = {}
   remoteId = 0
@@ -131,7 +130,7 @@ module.exports = Postmaster = (self={}) ->
           clear(id)
           reject(error)
 
-  self.log "INITIALIZE", name
+  self.log "INITIALIZE", defaultReceiver.name
 
   return self
 
