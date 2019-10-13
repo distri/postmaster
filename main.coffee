@@ -86,7 +86,7 @@ module.exports = Postmaster = (self={}) ->
                   message: message
                   stack: error.stack
     else
-      self.log "DROP message", event, "source #{JSON.stringify(data.from)} does not match target"
+      self.log name, "DROP message", event, "source #{JSON.stringify(data.from)} does not match target"
 
   self.receiver().addEventListener "message", listener
 
