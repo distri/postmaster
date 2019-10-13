@@ -15,7 +15,10 @@ module.exports = Postmaster = (self={}) ->
 
     if !target
       throw new Error "No remote target"
-    else if !Worker? or target instanceof Worker
+
+    self.log(defaultReceiver.name, "->", target.name, data)
+
+    if !Worker? or target instanceof Worker
       target.postMessage data
     else
       target.postMessage data, "*"
@@ -27,11 +30,14 @@ module.exports = Postmaster = (self={}) ->
   self.receiver ?= -> defaultReceiver
   self.ackTimeout ?= -> ackTimeout
   self.delegate ?= self
+  self.log ?= ->
   self.token ?= Math.random()
 
   listener = (event) ->
     {data, source} = event
     target = self.remoteTarget()
+
+    self.log defaultReceiver.name, "<-", source?.name, data
 
     # Only listening to messages from `opener`
     # event.source becomes undefined during the `onunload` event
@@ -77,11 +83,14 @@ module.exports = Postmaster = (self={}) ->
                 error:
                   message: message
                   stack: error.stack
+    else
+      self.log "DROP message. source", source?.name, "does not match target", target?.name
 
   self.receiver().addEventListener "message", listener
 
   self.dispose = ->
     self.receiver().removeEventListener "message", listener
+    self.log "DISPOSE", defaultReceiver.name
 
   pendingResponses = {}
   remoteId = 0
@@ -108,8 +117,7 @@ module.exports = Postmaster = (self={}) ->
       timeout = setTimeout ->
         pendingResponse = pendingResponses[id]
         if pendingResponse and !pendingResponse.ack
-          clear(id)
-          reject new Error "No ack received within #{ackWait}"
+          pendingResponse.reject new Error "No ack received within #{ackWait}"
       , ackWait
 
       pendingResponses[id] =
@@ -120,6 +128,8 @@ module.exports = Postmaster = (self={}) ->
         reject: (error) ->
           clear(id)
           reject(error)
+
+  self.log "INITIALIZE", defaultReceiver.name
 
   return self
 

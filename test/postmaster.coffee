@@ -1,6 +1,10 @@
 Postmaster = require "../main"
 
+randId = ->
+  Math.random().toString(36).substr(2)
+
 scriptContent = ->
+  # This function is toString'd to be inserted into the sub-frames.
   fn = ->
     pm = Postmaster
       delegate:
@@ -24,22 +28,37 @@ scriptContent = ->
     })();
   """
 
-srcUrl = -> 
+srcUrl = ->
   URL.createObjectURL new Blob ["""
     <html>
     <body>
       <script>#{scriptContent()}<\/script>
     </body>
     </html>
-  """], 
+  """],
     type: "text/html; charset=utf-8"
 
-initWindow = (targetWindow) ->
-  targetWindow.document.write "<script>#{scriptContent()}<\/script>"
+testFrame = (fn) ->
+  iframe = document.createElement('iframe')
+  iframe.name = "iframe-#{randId()}"
+  iframe.src = srcUrl()
+  document.body.appendChild(iframe)
+
+  postmaster = Postmaster
+    remoteTarget: ->
+      iframe.contentWindow
+
+  iframe.addEventListener "load", ->
+    fn(postmaster)
+    .finally ->
+      iframe.remove()
+      postmaster.dispose()
+
+  return
 
 describe "Postmaster", ->
   it "should work with openened windows", (done) ->
-    childWindow = open(srcUrl(), null, "width=200,height=200")
+    childWindow = open(srcUrl(), "child-#{randId()}", "width=200,height=200")
 
     postmaster = Postmaster
       remoteTarget: -> childWindow
@@ -54,95 +73,51 @@ describe "Postmaster", ->
         done(error)
       .then ->
         childWindow.close()
+        postmaster.dispose()
 
     return
 
   it "should work with iframes", (done) ->
-    iframe = document.createElement('iframe')
-    iframe.src = srcUrl()
-    document.body.appendChild(iframe)
-
-    postmaster = Postmaster
-      remoteTarget: ->
-        iframe.contentWindow
-
-    iframe.onload = ->
+    testFrame (postmaster) ->
       postmaster.invokeRemote "echo", 17
       .then (result) ->
         assert.equal result, 17
-      .then ->
-        done()
-      , (error) ->
-        done(error)
-      .then ->
-        iframe.remove()
+      .then done, done
 
     return
 
   it "should handle the remote call throwing errors", (done) ->
-    iframe = document.createElement('iframe')
-    iframe.src = srcUrl()
-    document.body.appendChild(iframe)
-
-    postmaster = Postmaster
-      remoteTarget: ->
-        iframe.contentWindow
-
-    iframe.onload = ->
+    testFrame (postmaster) ->
       postmaster.invokeRemote "throws"
-      .catch (error) ->
-        done()
       .then ->
-        iframe.remove()
+        done new Error "Expected an error"
+      , (error) ->
+        done()
 
     return
 
   it "should throwing a useful error when the remote doesn't define the function", (done) ->
-    iframe = document.createElement('iframe')
-    iframe.src = srcUrl()
-    document.body.appendChild(iframe)
-
-    postmaster = Postmaster
-      remoteTarget: ->
-        iframe.contentWindow
-
-    iframe.onload = ->
-      postmaster.invokeRemote "someUndefinedFunction"
-      .catch (error) ->
-        done()
+    testFrame (postmaster) ->
+      postmaster.invokeRemote "undefinedFn"
       .then ->
-        iframe.remove()
+        done new Error "Expected an error"
+      , (error) ->
+        done()
 
     return
 
   it "should handle the remote call returning failed promises", (done) ->
-    iframe = document.createElement('iframe')
-    iframe.src = srcUrl()
-    document.body.appendChild(iframe)
-
-    postmaster = Postmaster
-      remoteTarget: ->
-        iframe.contentWindow
-
-    iframe.onload = ->
+    testFrame (postmaster) ->
       postmaster.invokeRemote "promiseFail"
-      .catch (error) ->
-        done()
       .then ->
-        iframe.remove()
+        done new Error "Expected an error"
+      , (error) ->
+        done()
 
     return
 
   it "should be able to go around the world", (done) ->
-    iframe = document.createElement('iframe')
-    iframe.src = srcUrl()
-    document.body.appendChild(iframe)
-
-    postmaster = Postmaster
-      remoteTarget: ->
-        iframe.contentWindow
-
-    iframe.onload = ->
+    testFrame (postmaster) ->
       postmaster.yolo = (txt) ->
         "heyy #{txt}"
       postmaster.invokeRemote "invokeRemote", "yolo", "cool"
@@ -152,8 +127,6 @@ describe "Postmaster", ->
         done()
       , (error) ->
         done(error)
-      .then ->
-        iframe.remove()
 
     return
 
@@ -176,7 +149,7 @@ describe "Postmaster", ->
         done()
       , (error) ->
         done(error)
-      .then ->
+      .finally ->
         worker.terminate()
     , 100
 
@@ -197,8 +170,9 @@ describe "Postmaster", ->
         done()
       else
         done(1)
-    .then ->
+    .finally ->
       iframe.remove()
+      postmaster.dispose()
 
     return
 
@@ -207,9 +181,13 @@ describe "Postmaster", ->
       remoteTarget: -> null
 
     postmaster.invokeRemote "yo"
-    .catch (e) ->
+    .then ->
+      done throw new Error "Expected an error"
+    , (e) ->
       assert.equal e.message, "No remote target"
       done()
     .catch done
+    .finally ->
+      postmaster.dispose()
 
     return
