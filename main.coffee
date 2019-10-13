@@ -6,6 +6,7 @@ Postmaster wraps the `postMessage` API with promises.
 
 defaultReceiver = self
 ackTimeout = 1000
+name = defaultReceiver.name
 
 module.exports = Postmaster = (self={}) ->
   send = (data) ->
@@ -13,10 +14,12 @@ module.exports = Postmaster = (self={}) ->
     if self.token
       data.token = self.token
 
+    data.from = name
+
     if !target
       throw new Error "No remote target"
 
-    self.log(defaultReceiver.name, "->", target.name, data)
+    self.log(name, "->", data)
 
     if !Worker? or target instanceof Worker
       target.postMessage data
@@ -37,7 +40,7 @@ module.exports = Postmaster = (self={}) ->
     {data, source} = event
     target = self.remoteTarget()
 
-    self.log defaultReceiver.name, "<-", source?.name, data
+    self.log name, "<-", data
 
     # Only listening to messages from `opener`
     # event.source becomes undefined during the `onunload` event
@@ -84,13 +87,13 @@ module.exports = Postmaster = (self={}) ->
                   message: message
                   stack: error.stack
     else
-      self.log "DROP message. source", source?.name, "does not match target", target?.name
+      self.log "DROP message", event, "source #{JSON.stringify(data.from)} does not match target"
 
   self.receiver().addEventListener "message", listener
 
   self.dispose = ->
     self.receiver().removeEventListener "message", listener
-    self.log "DISPOSE", defaultReceiver.name
+    self.log "DISPOSE", name
 
   pendingResponses = {}
   remoteId = 0
@@ -129,7 +132,7 @@ module.exports = Postmaster = (self={}) ->
           clear(id)
           reject(error)
 
-  self.log "INITIALIZE", defaultReceiver.name
+  self.log "INITIALIZE", name
 
   return self
 
