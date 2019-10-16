@@ -8,6 +8,22 @@ defaultReceiver = self
 ackTimeout = 1000
 
 module.exports = Postmaster = (self={}) ->
+  info = ->
+    self.logger.info(arguments...)
+
+  debug = ->
+    self.logger.debug(arguments...)
+
+  dominant = Postmaster.dominant()
+  self.remoteTarget ?= -> dominant
+  self.receiver ?= -> defaultReceiver
+  self.ackTimeout ?= -> ackTimeout
+  self.delegate ?= self
+  self.logger ?=
+    info: ->
+    debug: ->
+  self.token ?= Math.random()
+
   send = (data) ->
     target = self.remoteTarget()
     if self.token
@@ -18,7 +34,7 @@ module.exports = Postmaster = (self={}) ->
     if !target
       throw new Error "No remote target"
 
-    self.log(defaultReceiver.name, "->", data)
+    info(defaultReceiver.name, "->", data)
 
     if !Worker? or target instanceof Worker
       target.postMessage data
@@ -26,14 +42,6 @@ module.exports = Postmaster = (self={}) ->
       target.postMessage data, "*"
 
     return
-
-  dominant = Postmaster.dominant()
-  self.remoteTarget ?= -> dominant
-  self.receiver ?= -> defaultReceiver
-  self.ackTimeout ?= -> ackTimeout
-  self.delegate ?= self
-  self.log ?= ->
-  self.token ?= Math.random()
 
   listener = (event) ->
     {data, source} = event
@@ -43,7 +51,7 @@ module.exports = Postmaster = (self={}) ->
     # event.source becomes undefined during the `onunload` event
     # We can track a token and match to allow the final message in this case
     if source is target or (source is undefined and data.token is self.token)
-      self.log defaultReceiver.name, "<-", data
+      info defaultReceiver.name, "<-", data
       {type, method, params, id} = data
 
       switch type
@@ -85,13 +93,13 @@ module.exports = Postmaster = (self={}) ->
                   message: message
                   stack: error.stack
     else
-      self.log defaultReceiver.name, "DROP message", event, "source #{JSON.stringify(data.from)} does not match target"
+      debug defaultReceiver.name, "DROP message", event, "source #{JSON.stringify(data.from)} does not match target"
 
   self.receiver().addEventListener "message", listener
 
   self.dispose = ->
     self.receiver().removeEventListener "message", listener
-    self.log "DISPOSE", defaultReceiver.name
+    info "DISPOSE", defaultReceiver.name
 
   pendingResponses = {}
   remoteId = 0
@@ -130,7 +138,7 @@ module.exports = Postmaster = (self={}) ->
           clear(id)
           reject(error)
 
-  self.log "INITIALIZE", defaultReceiver.name
+  info "INITIALIZE", defaultReceiver.name
 
   return self
 

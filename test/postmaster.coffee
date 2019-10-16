@@ -191,3 +191,13 @@ describe "Postmaster", ->
       postmaster.dispose()
 
     return
+
+  it "should log", ->
+    called = false
+
+    Postmaster
+      logger:
+        info: ->
+          called = true
+
+    assert called
