@@ -32,7 +32,7 @@ module.exports = Postmaster = (self={}) ->
     if self.token
       data.token = self.token
 
-    data.from = defaultReceiver.name
+    data.from = name
 
     if !target
       throw new Error "No remote target"
