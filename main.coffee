@@ -106,7 +106,7 @@ module.exports = Postmaster = (self={}) ->
   msgId = 0
 
   clear = (id) ->
-    debug "CLEAR", id
+    debug "CLEAR PENDING", id
     clearTimeout pendingResponses[id].timeout
     delete pendingResponses[id]
 
@@ -121,6 +121,7 @@ module.exports = Postmaster = (self={}) ->
           resp.reject new Error "No ack received within #{ackWait}"
       , ackWait
 
+      debug "STORE PENDING", id
       pendingResponses[id] = resp =
         timeout: timeout
         resolve: (result) ->
