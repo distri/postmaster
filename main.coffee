@@ -51,6 +51,7 @@ module.exports = Postmaster = (self={}) ->
     # event.source becomes undefined during the `onunload` event
     # We can track a token and match to allow the final message in this case
     if source is target or (source is undefined and data.token is self.token)
+      event.stopImmediatePropagation() # 
       info defaultReceiver.name, "<-", data
       {type, method, params, id} = data
 
@@ -95,10 +96,10 @@ module.exports = Postmaster = (self={}) ->
     else
       debug defaultReceiver.name, "DROP message", event, "source #{JSON.stringify(data.from)} does not match target"
 
-  self.receiver().addEventListener "message", listener
-
+  receiver = self.receiver()
+  receiver.addEventListener "message", listener
   self.dispose = ->
-    self.receiver().removeEventListener "message", listener
+    receiver.removeEventListener "message", listener
     info "DISPOSE", defaultReceiver.name
 
   pendingResponses = {}
