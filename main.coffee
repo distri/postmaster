@@ -6,13 +6,15 @@ Postmaster wraps the `postMessage` API with promises.
 
 defaultReceiver = self
 ackTimeout = 1000
+pmId = 0
 
 module.exports = Postmaster = (self={}) ->
+  instanceId = ++pmId
   info = ->
-    self.logger.info(defaultReceiver.name, arguments...)
+    self.logger.info(defaultReceiver.name+instanceId, arguments...)
 
   debug = ->
-    self.logger.debug(defaultReceiver.name, arguments...)
+    self.logger.debug(defaultReceiver.name+instanceId, arguments...)
 
   dominant = Postmaster.dominant()
   self.remoteTarget ?= -> dominant
@@ -112,7 +114,7 @@ module.exports = Postmaster = (self={}) ->
 
   self.invokeRemote = (method, params...) ->
     new Promise (resolve, reject) ->
-      id = msgId++
+      id = ++msgId
 
       ackWait = self.ackTimeout()
       timeout = setTimeout ->
