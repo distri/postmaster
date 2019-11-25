@@ -9,12 +9,13 @@ ackTimeout = 1000
 pmId = 0
 
 module.exports = Postmaster = (self={}) ->
-  instanceId = ++pmId
+  name = "#{defaultReceiver.name}-#{++pmId}"
+
   info = ->
-    self.logger.info(defaultReceiver.name+instanceId, arguments...)
+    self.logger.info(name, arguments...)
 
   debug = ->
-    self.logger.debug(defaultReceiver.name+instanceId, arguments...)
+    self.logger.debug(name, arguments...)
 
   dominant = Postmaster.dominant()
   self.remoteTarget ?= -> dominant
