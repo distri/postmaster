@@ -103,7 +103,7 @@ module.exports = Postmaster = (self={}) ->
     info "DISPOSE"
 
   pendingResponses = {}
-  remoteId = 0
+  msgId = 0
 
   clear = (id) ->
     clearTimeout pendingResponses[id].timeout
@@ -111,17 +111,7 @@ module.exports = Postmaster = (self={}) ->
 
   self.invokeRemote = (method, params...) ->
     new Promise (resolve, reject) ->
-      id = remoteId++
-
-      try
-        send
-          type: "message"
-          method: method
-          params: params
-          id: id
-      catch e
-        reject(e)
-        return
+      id = msgId++
 
       ackWait = self.ackTimeout()
       timeout = setTimeout ->
@@ -138,9 +128,19 @@ module.exports = Postmaster = (self={}) ->
           clear(id)
           resolve(result)
         reject: (error) ->
-          debug "REJECT", id, result
+          debug "REJECT", id, error
           clear(id)
           reject(error)
+
+      try
+        send
+          type: "message"
+          method: method
+          params: params
+          id: id
+      catch e
+        reject(e)
+        return
 
   info "INITIALIZE"
 
