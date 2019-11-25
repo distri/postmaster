@@ -9,10 +9,10 @@ ackTimeout = 1000
 
 module.exports = Postmaster = (self={}) ->
   info = ->
-    self.logger.info(arguments...)
+    self.logger.info(defaultReceiver.name, arguments...)
 
   debug = ->
-    self.logger.debug(arguments...)
+    self.logger.debug(defaultReceiver.name, arguments...)
 
   dominant = Postmaster.dominant()
   self.remoteTarget ?= -> dominant
@@ -34,7 +34,7 @@ module.exports = Postmaster = (self={}) ->
     if !target
       throw new Error "No remote target"
 
-    info(defaultReceiver.name, "->", data)
+    info("->", data)
 
     if !Worker? or target instanceof Worker
       target.postMessage data
@@ -52,7 +52,7 @@ module.exports = Postmaster = (self={}) ->
     # We can track a token and match to allow the final message in this case
     if source is target or (source is undefined and data.token is self.token)
       event.stopImmediatePropagation() # 
-      info defaultReceiver.name, "<-", data
+      info "<-", data
       {type, method, params, id} = data
 
       switch type
@@ -94,13 +94,13 @@ module.exports = Postmaster = (self={}) ->
                   message: message
                   stack: error.stack
     else
-      debug defaultReceiver.name, "DROP message", event, "source #{JSON.stringify(data.from)} does not match target"
+      debug "DROP message", event, "source #{JSON.stringify(data.from)} does not match target"
 
   receiver = self.receiver()
   receiver.addEventListener "message", listener
   self.dispose = ->
     receiver.removeEventListener "message", listener
-    info "DISPOSE", defaultReceiver.name
+    info "DISPOSE"
 
   pendingResponses = {}
   remoteId = 0
@@ -127,19 +127,22 @@ module.exports = Postmaster = (self={}) ->
       timeout = setTimeout ->
         pendingResponse = pendingResponses[id]
         if pendingResponse and !pendingResponse.ack
+          info "TIMEOUT", pendingResponse
           pendingResponse.reject new Error "No ack received within #{ackWait}"
       , ackWait
 
       pendingResponses[id] =
         timeout: timeout
         resolve: (result) ->
+          debug "RESOLVE", id, result
           clear(id)
           resolve(result)
         reject: (error) ->
+          debug "REJECT", id, result
           clear(id)
           reject(error)
 
-  info "INITIALIZE", defaultReceiver.name
+  info "INITIALIZE"
 
   return self
 
